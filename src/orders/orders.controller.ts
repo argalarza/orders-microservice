@@ -1,46 +1,41 @@
-import { Controller, NotImplementedException, ParseUUIDPipe } from '@nestjs/common';
-import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
+import { Controller, Post, Get, Body, Param, ParseUUIDPipe, Put } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderPaginationDto } from './dto/order-pagination.dto';
 import { ChangeOrderStatusDto, PaidOrderDto } from './dto';
 
-@Controller()
+@Controller('orders') // Definir la ruta base
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @MessagePattern('createOrder')
-  async create(@Payload() createOrderDto: CreateOrderDto) {
-
+  @Post('create') // Ruta para crear una orden
+  async create(@Body() createOrderDto: CreateOrderDto) {
     const order = await this.ordersService.create(createOrderDto);
-    const paymentSession = await this.ordersService.createPaymentSession(order)
+    const paymentSession = await this.ordersService.createPaymentSession(order);
 
     return {
       order,
       paymentSession,
-    }
+    };
   }
 
-  @MessagePattern('findAllOrders')
-  findAll(@Payload() orderPaginationDto: OrderPaginationDto ) {
+  @Get() // Ruta para obtener todas las órdenes con paginación
+  findAll(@Body() orderPaginationDto: OrderPaginationDto) {
     return this.ordersService.findAll(orderPaginationDto);
   }
 
-  @MessagePattern('findOneOrder')
-  findOne(@Payload('id', ParseUUIDPipe ) id: string) {
+  @Get(':id') // Ruta para obtener una orden por ID
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.ordersService.findOne(id);
   }
 
-  @MessagePattern('changeOrderStatus')
-  changeOrderStatus(@Payload() changeOrderStatusDto: ChangeOrderStatusDto ) {
-    return this.ordersService.changeStatus(changeOrderStatusDto)
-    
-  }
-  
-  
-  @EventPattern('payment.succeeded')
-  paidOrder(@Payload() paidOrderDto: PaidOrderDto ) {
-    return this.ordersService.paidOrder( paidOrderDto );
+  @Put('status') // Ruta para cambiar el estado de una orden
+  changeOrderStatus(@Body() changeOrderStatusDto: ChangeOrderStatusDto) {
+    return this.ordersService.changeStatus(changeOrderStatusDto);
   }
 
+  @Post('payment/succeeded') // Ruta para procesar cuando el pago haya sido realizado
+  paidOrder(@Body() paidOrderDto: PaidOrderDto) {
+    return this.ordersService.paidOrder(paidOrderDto);
+  }
 }

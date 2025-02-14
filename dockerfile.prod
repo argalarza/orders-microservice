@@ -60,6 +60,6 @@ ENV NODE_ENV=production
 USER node
 
 
-EXPOSE 3000
+EXPOSE 3004
 
 CMD [ "node", "dist/main.js" ]

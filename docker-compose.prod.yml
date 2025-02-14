@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  orders-db:
+    container_name: orders_database
+    image: postgres:16.2
+    restart: always
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=ordersdb
+    # Este servicio solo es necesario si quieres seguir usando la base de datos local (PostgreSQL)
+    # Si solo usas Neon, puedes eliminar esta sección
+
+  orders-ms:
+    build:
+      context: ../orders-ms
+      dockerfile: dockerfile.prod
+      args:
+        - ORDERS_DATABASE_URL=${ORDERS_DATABASE_URL}
+    image: orders-ms
+    environment:
+      - PORT=3004
+      - DATABASE_URL=${ORDERS_DATABASE_URL}
+    depends_on:
+      - orders-db  # Puedes eliminar esto si ya no usas orders-db localmente
+    ports:
+      - 3004:3004  # Agrega esta línea para mapear el puerto 3000 del contenedor al host
